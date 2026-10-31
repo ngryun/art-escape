@@ -2,128 +2,69 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>밤의 미술관 탈출</title>
-  <meta name="description" content="미술 교과서를 펼쳐 쪽 번호를 찾아 5개의 전시실을 탈출하는 방탈출 게임">
+  <meta name="description" content="3D 전시실을 둘러보며 교과서 속 작품을 찾고, 그 작품이 실린 쪽 번호로 문을 여는 미술 방탈출">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <main class="stage">
+<body class="game">
 
-    <!-- 인트로 -->
-    <section id="screen-intro" class="screen" hidden>
+  <canvas id="gl" aria-label="3D 전시실. 화면을 끌어서 둘러보고, 작품과 문을 눌러 조사합니다."></canvas>
+  <div id="vignette"></div>
+
+  <!-- HUD -->
+  <div class="hud" id="hud-tl" hidden>
+    <div class="room-no" id="hud-no"></div>
+    <div class="room-title" id="hud-name"></div>
+    <ol class="dots" id="hud-dots" aria-label="진행 상황"></ol>
+  </div>
+  <div class="hud" id="hud-tr" hidden>
+    <span class="chip" id="timer" aria-label="경과 시간">00:00</span>
+    <button class="chip" id="btn-art" type="button" hidden>작품 보기</button>
+    <button class="chip chip-gold" id="btn-lock" type="button" hidden>자물쇠</button>
+  </div>
+  <div class="hud" id="hud-b" hidden>
+    <p id="guide"></p>
+  </div>
+  <div id="toast" class="off" role="status"></div>
+
+  <!-- 시작 화면 -->
+  <section id="start">
+    <div class="start-box">
       <p class="eyebrow">미술 창작 · 교과서 방탈출</p>
-      <h1 class="title">밤의 미술관<br>탈출</h1>
-      <div class="frame">
-        <p class="story">
-          관람 시간이 끝난 줄도 모르고 작품을 보다가, 그만 미술관에 갇혀 버렸다.
-          전시실마다 굳게 닫힌 문에는 숫자 자물쇠가 걸려 있다.
-        </p>
-        <p class="story">
-          자물쇠의 비밀번호는 <strong>미술 교과서의 쪽 번호</strong>.
-          교과서를 펼쳐 문제 속 작품과 내용을 찾아 5개의 전시실을 빠져나가자.
-        </p>
-        <ul class="rules">
-          <li>정답은 그 내용이 실린 <strong>쪽 번호(숫자)</strong>입니다.</li>
-          <li>목차를 먼저 살펴보면 훨씬 빨리 찾을 수 있어요.</li>
-          <li>오답 2회, 4회가 되면 힌트가 열립니다.</li>
-        </ul>
+      <h1>밤의 <em>미술관</em><br>탈출</h1>
+      <p class="story">관람 시간이 끝난 줄도 모르고 작품을 보다가 그만 미술관에 갇혀 버렸다. 다섯 전시실의 출구마다 숫자 자물쇠가 걸려 있다.</p>
+      <p class="story">전시실 어딘가에 걸린 작품을 찾아라. 그 작품이 실린 <strong>교과서 쪽 번호</strong>가 바로 자물쇠의 비밀번호다.</p>
 
-        <div id="resume-box" class="resume" hidden>
-          <p id="resume-text"></p>
-          <div class="row">
-            <button id="btn-resume" class="btn btn-gold" type="button">이어 하기</button>
-            <button id="btn-reset-intro" class="btn btn-ghost" type="button">처음부터</button>
-          </div>
+      <div id="resume-box" class="resume" hidden>
+        <p id="resume-text"></p>
+        <div class="row">
+          <button id="btn-resume" class="btn" type="button">이어 하기</button>
+          <button id="btn-reset-start" class="btn ghost" type="button">처음부터</button>
         </div>
-
-        <form id="start-form" class="start-form" autocomplete="off">
-          <label for="player-name">이름 (학번 포함 가능)</label>
-          <input id="player-name" name="name" type="text" maxlength="20" placeholder="예: 10101 홍길동" required>
-          <button class="btn btn-gold" type="submit">미술관 입장</button>
-        </form>
       </div>
-      <p class="note">교과서를 꼭 옆에 펼쳐 두세요.</p>
-    </section>
 
-    <!-- 전시실 -->
-    <section id="screen-room" class="screen" hidden>
-      <header class="topbar">
-        <ol id="progress" class="progress" aria-label="진행 상황"></ol>
-        <span id="timer" class="timer" aria-label="경과 시간">00:00</span>
-      </header>
-
-      <article id="room-card" class="frame room">
-        <p id="room-no" class="eyebrow"></p>
-        <h2 id="room-name" class="room-name"></h2>
-        <p id="room-scene" class="scene"></p>
-        <p id="room-question" class="question"></p>
-
-        <div class="lock">
-          <span class="lock-label">쪽</span>
-          <output id="display" class="display" aria-live="polite"></output>
+      <form id="start-form" class="start-form" autocomplete="off">
+        <label for="player-name">이름 (학번 포함 가능)</label>
+        <div class="row">
+          <input id="player-name" type="text" maxlength="20" placeholder="예: 10101 홍길동" required>
+          <button class="btn" type="submit">미술관 입장</button>
         </div>
-
-        <div id="keypad" class="keypad" role="group" aria-label="숫자 자물쇠">
-          <button type="button" data-key="1">1</button>
-          <button type="button" data-key="2">2</button>
-          <button type="button" data-key="3">3</button>
-          <button type="button" data-key="4">4</button>
-          <button type="button" data-key="5">5</button>
-          <button type="button" data-key="6">6</button>
-          <button type="button" data-key="7">7</button>
-          <button type="button" data-key="8">8</button>
-          <button type="button" data-key="9">9</button>
-          <button type="button" data-key="back" class="key-fn" aria-label="한 글자 지우기">지움</button>
-          <button type="button" data-key="0">0</button>
-          <button type="button" data-key="enter" class="key-enter">열기</button>
-        </div>
-
-        <p id="message" class="message" role="status"></p>
-
-        <div class="hints">
-          <button id="btn-hint1" class="btn btn-hint" type="button" disabled>힌트 1</button>
-          <button id="btn-hint2" class="btn btn-hint" type="button" disabled>힌트 2</button>
-        </div>
-        <ul id="hint-list" class="hint-list"></ul>
-      </article>
-
-      <button id="btn-reset-room" class="link-btn" type="button">처음부터 다시 하기</button>
-    </section>
-
-    <!-- 문이 열림 -->
-    <div id="door" class="door" hidden>
-      <div class="door-panel frame">
-        <p class="eyebrow">철컥!</p>
-        <h2 id="door-title" class="room-name">문이 열렸다</h2>
-        <p id="door-found" class="found"></p>
-        <button id="btn-next" class="btn btn-gold" type="button">다음 전시실로</button>
-      </div>
+      </form>
+      <p class="note">화면을 끌어서 360도로 둘러보고, 빛나는 것을 눌러 조사해요. 교과서를 꼭 옆에 펼쳐 두세요.</p>
     </div>
+  </section>
 
-    <!-- 탈출 -->
-    <section id="screen-escape" class="screen" hidden>
-      <p class="eyebrow">탈출 성공</p>
-      <h1 class="title">미술관을<br>빠져나왔다!</h1>
-      <div class="frame certificate">
-        <dl class="result">
-          <div><dt>이름</dt><dd id="r-name"></dd></div>
-          <div><dt>탈출 시간</dt><dd id="r-time"></dd></div>
-          <div><dt>오답</dt><dd id="r-wrong"></dd></div>
-          <div><dt>힌트 사용</dt><dd id="r-hints"></dd></div>
-        </dl>
-        <p class="code-label">탈출 인증 코드</p>
-        <p id="r-code" class="code"></p>
-        <p class="note">이 화면을 선생님께 보여 주세요.</p>
-      </div>
-      <button id="btn-reset-escape" class="link-btn" type="button">처음부터 다시 하기</button>
-    </section>
+  <!-- 카드 -->
+  <div id="modal" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
+  <div id="fade"></div>
 
-  </main>
+  <noscript><p class="fallback">이 게임은 자바스크립트가 필요해요.</p></noscript>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="common.js"></script>
   <script src="questions.js"></script>
   <script src="app.js"></script>
