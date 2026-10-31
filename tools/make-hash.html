@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>정답 해시 만들기</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .hash-form { display: grid; gap: 8px; }
+    .hash-form label { font-size: .88rem; color: var(--ink-soft); margin-top: 6px; }
+    .hash-form input {
+      width: 100%; padding: 12px 14px; font: inherit; font-size: 1.05rem;
+      color: var(--ink); background: rgba(0,0,0,.3);
+      border: 1px solid var(--line); border-radius: 6px;
+    }
+    .hash-form .btn { margin-top: 12px; }
+    #out {
+      margin-top: 18px; padding: 12px; word-break: break-all;
+      font-family: ui-monospace, Consolas, monospace; font-size: .9rem;
+      background: #070a14; border: 1px solid var(--line); border-radius: 6px; color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <p class="eyebrow">교사용 도구</p>
+    <h1 class="title">정답 해시<br>만들기</h1>
+    <div class="frame">
+      <form id="f" class="hash-form">
+        <label for="room">방 번호 (1~5)</label>
+        <input id="room" type="number" min="1" max="20" value="1" required>
+        <label for="page">정답 쪽 번호</label>
+        <input id="page" type="number" min="1" required>
+        <button class="btn btn-gold" type="submit">해시 만들기</button>
+      </form>
+      <p id="out" hidden></p>
+      <button id="copy" class="btn btn-ghost" type="button" hidden style="margin-top:10px;width:100%">복사</button>
+    </div>
+    <p class="note">만든 값을 questions.js에서 해당 방의 hash 칸에 붙여 넣으세요.<br>방 번호가 다르면 같은 쪽이어도 해시가 달라집니다.</p>
+  </main>
+  <script src="../common.js"></script>
+  <script>
+    const out = document.getElementById("out");
+    const copy = document.getElementById("copy");
+    document.getElementById("f").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const room = document.getElementById("room").value;
+      const page = document.getElementById("page").value;
+      out.textContent = await EscapeCommon.answerHash(Number(room), page);
+      out.hidden = false;
+      copy.hidden = false;
+      copy.textContent = "복사";
+    });
+    copy.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(out.textContent); copy.textContent = "복사했어요"; }
+      catch (e) { copy.textContent = "직접 선택해서 복사하세요"; }
+    });
+  </script>
+</body>
+</html>
